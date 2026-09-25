@@ -1,0 +1,6 @@
+@DocumentExchange.Api_HostAddress = http://localhost:5100
+
+GET {{DocumentExchange.Api_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###

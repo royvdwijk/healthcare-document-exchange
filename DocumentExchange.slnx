@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DocumentExchange.Api/DocumentExchange.Api.csproj" />
+  </Folder>
+</Solution>
