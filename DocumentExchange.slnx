@@ -3,6 +3,7 @@
     <Project Path="src/DocumentExchange.Api/DocumentExchange.Api.csproj" />
   </Folder>
   <Folder Name="/test/">
+    <Project Path="test/DocumentExchange.IntegrationTests/DocumentExchange.IntegrationTests.csproj" />
     <Project Path="test/DocumentExchange.UnitTests/DocumentExchange.UnitTests.csproj" />
   </Folder>
 </Solution>
