@@ -7,4 +7,27 @@ namespace DocumentExchange.Api.Models;
 /// <param name="Name">The name of the patient.</param>
 /// <param name="DateOfBirth">The date of birth of the parient.</param>
 /// <param name="Allergies">A <see cref="List{T}"/> of <see cref="Allergy"/> objects that represents allergies this patient has.</param>
-public sealed record Patient(string Bsn, string Name, DateOnly DateOfBirth, IReadOnlyList<Allergy> Allergies);
+public sealed record Patient(string Bsn, string Name, DateOnly DateOfBirth, IReadOnlyList<Allergy> Allergies)
+{
+    /// <summary>
+    /// Updates this patient with new data from the provided patient.
+    /// Retains data is unaffected.
+    /// </summary>
+    /// <param name="other">The newer information about the same patient.</param>
+    /// <returns>A new <see cref="Patient"/> containing the merged information.</returns>
+    /// <exception cref="ArgumentException">Thrown when the patients do not match in equality.</exception>
+    public Patient Merge(Patient other)
+    {
+        if (other != this)
+            throw new ArgumentException(nameof(Merge) + " requires the patients to match in equality.", nameof(other));
+
+        return other with
+        {
+            Allergies = [.. other.Allergies.UnionBy(Allergies, allergy => allergy.Substance, StringComparer.OrdinalIgnoreCase)]
+        };
+    }
+
+    public bool Equals(Patient? other) => other is not null && Bsn == other.Bsn;
+
+    public override int GetHashCode() => Bsn.GetHashCode();
+}

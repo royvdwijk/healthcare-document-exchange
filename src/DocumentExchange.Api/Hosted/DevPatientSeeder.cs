@@ -10,7 +10,7 @@ public sealed class DevPatientSeeder(IPatientRepository patients, ILogger<DevPat
     {
         foreach (var patient in SeedData.Patients)
         {
-            await patients.AddAsync(patient, stoppingToken);
+            await patients.AddOrMerge(patient, stoppingToken);
         }
 
         logger.LogInformation("Seeded {PatientCount} patient(s)", SeedData.Patients.Count);

@@ -5,9 +5,9 @@ namespace DocumentExchange.Api.Data;
 /// <summary>Repository which manages patients in the <see cref="InMemoryDatabase"/>.</summary>
 public sealed class InMemoryPatientRepository(InMemoryDatabase database) : IPatientRepository
 {
-    public Task AddAsync(Patient patient, CancellationToken cancellationToken = default)
+    public Task AddOrMerge(Patient patient, CancellationToken cancellationToken = default)
     {
-        database.Patients[patient.Bsn] = patient;
+        database.Patients.AddOrUpdate(patient.Bsn, patient, (_, existing) => existing.Merge(patient));
         return Task.CompletedTask;
     }
 

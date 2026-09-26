@@ -8,4 +8,5 @@ namespace DocumentExchange.Api.Data;
 public sealed class InMemoryDatabase
 {
     public ConcurrentDictionary<string, Patient> Patients { get; } = new();
+    public ConcurrentDictionary<Guid, Referral> Referrals { get; } = new();
 }

@@ -1,4 +1,5 @@
 using DocumentExchange.Api.Data;
+using DocumentExchange.Api.Endpoints;
 using DocumentExchange.Api.Hosted;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
 builder.Services.AddInMemoryPatientDatabase();
+builder.Services.AddInMemoryReferralDatabase();
 
 if (builder.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>("SeedDatabase"))
 {
@@ -24,5 +26,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapReferralEndpoints();
 
 app.Run();

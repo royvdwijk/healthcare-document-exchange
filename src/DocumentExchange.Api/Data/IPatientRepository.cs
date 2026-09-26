@@ -5,12 +5,12 @@ namespace DocumentExchange.Api.Data;
 public interface IPatientRepository
 {
     /// <summary>
-    /// Adds a new patient instance to the repository.
+    /// Adds or merges a <see cref="Patient"/> instance in the repository depending on if the <paramref name="patient"/> instance is known using equality.
+    /// Information should be retained with a merge.
     /// </summary>
-    /// <param name="patient">The patient to add.</param>
+    /// <param name="patient">The patient to add or merge.</param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task AddAsync(Patient patient, CancellationToken cancellationToken = default);
+    Task AddOrMerge(Patient patient, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves a patient by their unique BSN.
