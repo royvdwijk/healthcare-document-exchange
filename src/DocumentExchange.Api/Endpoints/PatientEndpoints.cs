@@ -24,8 +24,11 @@ public static class PatientEndpoints
         [RegularExpression(@"^\d{9}$", ErrorMessage = "The BSN must consist of exactly 9 digits.")] string bsn,
         string[]? include,
         IPatientRepository patients,
+        ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
+        var logger = loggerFactory.CreateLogger(typeof(PatientEndpoints));
+
         if (!TryParseIncludes(include ?? [], out var includes, out var invalidValue))
         {
             var errors = new Dictionary<string, string[]>
@@ -39,10 +42,13 @@ public static class PatientEndpoints
         var patient = await patients.GetByBsnAsync(bsn, cancellationToken);
         if (patient is null)
         {
+            logger.LogWarning("Patient {Bsn} was requested but is not known", bsn);
             return TypedResults.NotFound();
         }
 
         var response = PatientResponse.FromPatient(patient, includes.Contains(PatientInclude.Allergies));
+
+        logger.LogInformation("Shared patient {Bsn} including {Includes}", patient.Bsn, includes);
         return TypedResults.Ok(response);
     }
 

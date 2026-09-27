@@ -1,8 +1,26 @@
 using DocumentExchange.Api.Data;
 using DocumentExchange.Api.Endpoints;
 using DocumentExchange.Api.Hosted;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSerilog((services, logger) =>
+{
+    logger.ReadFrom.Configuration(builder.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .WriteTo.Console();
+
+    var logFilePath = builder.Configuration["LogFilePath"];
+    if (!string.IsNullOrWhiteSpace(logFilePath))
+    {
+        logger.WriteTo.File(
+            Path.Combine(builder.Environment.ContentRootPath, logFilePath),
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 7);
+    }
+});
 
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
@@ -20,6 +38,13 @@ if (builder.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>(
 }
 
 var app = builder.Build();
+
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} from {ClientIp} responded {StatusCode} in {Elapsed:0} ms";
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+        diagnosticContext.Set("ClientIp", httpContext.Connection.RemoteIpAddress?.ToString());
+});
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();

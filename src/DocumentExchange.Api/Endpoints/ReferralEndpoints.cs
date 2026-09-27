@@ -23,8 +23,10 @@ public static class ReferralEndpoints
         ReferralRequest request,
         IPatientRepository patients,
         IReferralRepository referrals,
+        ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
+        var logger = loggerFactory.CreateLogger(typeof(ReferralEndpoints));
         var patient = request.Patient.ToPatient();
 
         var referral = new Referral(
@@ -35,6 +37,10 @@ public static class ReferralEndpoints
 
         await patients.AddOrMerge(patient, cancellationToken);
         await referrals.AddAsync(referral, cancellationToken);
+
+        logger.LogInformation(
+            "Received referral {ReferralId} for patient {Bsn} with {AllergyCount} allergies",
+            referral.Id, patient.Bsn, patient.Allergies.Count);
 
         return TypedResults.Created((string?)null, referral);
     }
