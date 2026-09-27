@@ -25,13 +25,15 @@ public static class ReferralEndpoints
         IReferralRepository referrals,
         CancellationToken cancellationToken)
     {
+        var patient = request.Patient.ToPatient();
+
         var referral = new Referral(
             Id: Guid.NewGuid(),
             ReceivedAt: DateTimeOffset.UtcNow,
-            request.Patient,
+            patient,
             request.Reason);
 
-        await patients.AddOrMerge(request.Patient, cancellationToken);
+        await patients.AddOrMerge(patient, cancellationToken);
         await referrals.AddAsync(referral, cancellationToken);
 
         return TypedResults.Created((string?)null, referral);

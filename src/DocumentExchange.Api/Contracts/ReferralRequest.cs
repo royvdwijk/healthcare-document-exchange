@@ -1,4 +1,4 @@
-using DocumentExchange.Api.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace DocumentExchange.Api.Contracts;
 
@@ -7,4 +7,4 @@ namespace DocumentExchange.Api.Contracts;
 /// </summary>
 /// <param name="Patient">The referred patient.</param>
 /// <param name="Reason">The reason for the referral.</param>
-public sealed record ReferralRequest(Patient Patient, string Reason);
+public sealed record ReferralRequest([Required] ReferralPatientRequest Patient, [Required] string Reason);

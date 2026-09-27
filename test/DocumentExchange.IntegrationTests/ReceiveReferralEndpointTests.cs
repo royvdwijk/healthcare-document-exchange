@@ -1,8 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using DocumentExchange.Api.Contracts;
 using DocumentExchange.Api.Data;
 using DocumentExchange.Api.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,7 +20,7 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
     public async Task ValidReferral_ReturnsCreatedWithStoredReferral()
     {
         var client = Factory.CreateClient();
-        var request = CreateRequest([new Allergy("Penicillin", "Skin rash")]);
+        var request = CreateRequest([new ReferralAllergyRequest("Penicillin", "Skin rash")]);
 
         var response = await client.PostAsJsonAsync("/api/referrals", request);
 
@@ -36,7 +38,7 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
     {
         var client = Factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/referrals", CreateRequest([new Allergy("Penicillin", "Skin rash")]));
+        var response = await client.PostAsJsonAsync("/api/referrals", CreateRequest([new ReferralAllergyRequest("Penicillin", "Skin rash")]));
 
         var referral = await response.Content.ReadFromJsonAsync<Referral>();
         Assert.True(Database.Referrals.ContainsKey(referral!.Id));
@@ -50,7 +52,7 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
         await patients.AddOrMerge(new Patient(Bsn, "Jan Jansen", DateOfBirth, [new Allergy("Latex", "Itching")]));
         var client = Factory.CreateClient();
 
-        await client.PostAsJsonAsync("/api/referrals", CreateRequest([new Allergy("Penicillin", "Skin rash")]));
+        await client.PostAsJsonAsync("/api/referrals", CreateRequest([new ReferralAllergyRequest("Penicillin", "Skin rash")]));
 
         var patient = await patients.GetByBsnAsync(Bsn);
         Assert.NotNull(patient);
@@ -72,6 +74,41 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
         Assert.Single(Database.Patients);
     }
 
-    private static ReferralRequest CreateRequest(IReadOnlyList<Allergy> allergies) =>
-        new(new Patient(Bsn, "Jan Jansen", DateOfBirth, allergies), "Discharged after hip surgery.");
+    [Theory]
+    [InlineData("""{ "reason": "Discharged" }""", "Patient")]
+    [InlineData("""{ "patient": { "bsn": "999990019", "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": [] } }""", "Reason")]
+    [InlineData("""{ "patient": { "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": [] }, "reason": "Discharged" }""", "Patient.Bsn")]
+    [InlineData("""{ "patient": { "bsn": "12345678", "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": [] }, "reason": "Discharged" }""", "Patient.Bsn")]
+    [InlineData("""{ "patient": { "bsn": "12345678a", "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": [] }, "reason": "Discharged" }""", "Patient.Bsn")]
+    [InlineData("""{ "patient": { "bsn": "999990019", "name": "", "dateOfBirth": "1942-03-14", "allergies": [] }, "reason": "Discharged" }""", "Patient.Name")]
+    [InlineData("""{ "patient": { "bsn": "999990019", "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": null }, "reason": "Discharged" }""", "Patient.Allergies")]
+    [InlineData("""{ "patient": { "bsn": "999990019", "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": [ { "substance": "", "reaction": "Itching" } ] }, "reason": "Discharged" }""", "Patient.Allergies[0].Substance")]
+    [InlineData("""{ "patient": { "bsn": "999990019", "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": [ { "substance": "Latex" } ] }, "reason": "Discharged" }""", "Patient.Allergies[0].Reaction")]
+    public async Task InvalidReferral_ReturnsValidationProblemAndStoresNothing(string json, string expectedErrorKey)
+    {
+        var client = Factory.CreateClient();
+
+        var response = await client.PostAsync("/api/referrals", new StringContent(json, Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>();
+        Assert.NotNull(problem);
+        Assert.Contains(expectedErrorKey, problem.Errors.Keys);
+        Assert.Empty(Database.Referrals);
+        Assert.Empty(Database.Patients);
+    }
+
+    [Fact]
+    public async Task MalformedJson_ReturnsBadRequest()
+    {
+        var client = Factory.CreateClient();
+
+        var response = await client.PostAsync("/api/referrals", new StringContent("{ not json", Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Empty(Database.Referrals);
+    }
+
+    private static ReferralRequest CreateRequest(IReadOnlyList<ReferralAllergyRequest> allergies) =>
+        new(new ReferralPatientRequest(Bsn, "Jan Jansen", DateOfBirth, allergies), "Discharged after hip surgery.");
 }
