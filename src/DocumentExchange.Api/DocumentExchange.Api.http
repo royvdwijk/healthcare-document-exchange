@@ -19,4 +19,12 @@ Content-Type: application/json
   "reason": "TEST. Discharged after hip surgery, requires rehabilitation care."
 }
 
+### Get a patient
+GET {{HostAddress}}/api/patients/999990019
+Accept: application/json
+
+### Get a patient, including their allergies
+GET {{HostAddress}}/api/patients/999990019?include=allergies
+Accept: application/json
+
 ###

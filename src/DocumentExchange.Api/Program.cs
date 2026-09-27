@@ -32,5 +32,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapReferralEndpoints();
+app.MapPatientEndpoints();
 
 app.Run();
