@@ -16,9 +16,9 @@ public class GetPatientEndpointTests(WebApplicationFactory<Program> factory) : A
     private static readonly DateOnly DateOfBirth = new(1942, 3, 14);
 
     [Fact]
-    public async Task KnownPatient_ReturnsPatientWithoutAllergiesByDefault()
+    public async Task KnownPatient_ReturnsPatientWithoutExtraInformationByDefault()
     {
-        await AddPatientAsync([new Allergy("Latex", "Itching")]);
+        await AddPatientAsync([new Allergy("Latex", "Itching")], [new Medication("Metoprolol", "50 mg", "Once a day")]);
         var client = Factory.CreateClient();
 
         var response = await client.GetAsync($"/api/patients/{Bsn}");
@@ -30,6 +30,7 @@ public class GetPatientEndpointTests(WebApplicationFactory<Program> factory) : A
         Assert.Equal("Jan Jansen", patient.Name);
         Assert.Equal(DateOfBirth, patient.DateOfBirth);
         Assert.Null(patient.Allergies);
+        Assert.Null(patient.Medications);
     }
 
     [Theory]
@@ -49,6 +50,44 @@ public class GetPatientEndpointTests(WebApplicationFactory<Program> factory) : A
         Assert.Equal(2, patient.Allergies.Count);
         Assert.Contains(new PatientAllergyResponse("Latex", "Itching"), patient.Allergies);
         Assert.Contains(new PatientAllergyResponse("Penicillin", "Skin rash"), patient.Allergies);
+        Assert.Null(patient.Medications);
+    }
+
+    [Theory]
+    [InlineData("medications")]
+    [InlineData("Medications")]
+    [InlineData("MEDICATIONS")]
+    public async Task IncludeMedications_ReturnsPatientWithMedications(string include)
+    {
+        await AddPatientAsync(
+            [new Allergy("Latex", "Itching")],
+            [new Medication("Metoprolol", "50 mg", "Once a day"), new Medication("Omeprazole", "20 mg", "Once a day")]);
+        var client = Factory.CreateClient();
+
+        var response = await client.GetAsync($"/api/patients/{Bsn}?include={include}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var patient = await response.Content.ReadFromJsonAsync<PatientResponse>();
+        Assert.NotNull(patient?.Medications);
+        Assert.Equal(2, patient.Medications.Count);
+        Assert.Contains(new PatientMedicationResponse("Metoprolol", "50 mg", "Once a day"), patient.Medications);
+        Assert.Contains(new PatientMedicationResponse("Omeprazole", "20 mg", "Once a day"), patient.Medications);
+        Assert.Null(patient.Allergies);
+    }
+
+    [Fact]
+    public async Task IncludeAllergiesAndMedications_ReturnsPatientWithBoth()
+    {
+        await AddPatientAsync([new Allergy("Latex", "Itching")], [new Medication("Metoprolol", "50 mg", "Once a day")]);
+        var client = Factory.CreateClient();
+
+        var response = await client.GetAsync($"/api/patients/{Bsn}?include=allergies&include=medications");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var patient = await response.Content.ReadFromJsonAsync<PatientResponse>();
+        Assert.NotNull(patient);
+        Assert.Equal([new PatientAllergyResponse("Latex", "Itching")], patient.Allergies);
+        Assert.Equal([new PatientMedicationResponse("Metoprolol", "50 mg", "Once a day")], patient.Medications);
     }
 
     [Fact]
@@ -91,7 +130,7 @@ public class GetPatientEndpointTests(WebApplicationFactory<Program> factory) : A
         Assert.Contains("include", problem.Errors.Keys);
     }
 
-    private Task AddPatientAsync(IReadOnlyList<Allergy> allergies) =>
+    private Task AddPatientAsync(IReadOnlyList<Allergy> allergies, IReadOnlyList<Medication>? medications = null) =>
         Factory.Services.GetRequiredService<IPatientRepository>()
-            .AddOrMerge(new Patient(Bsn, "Jan Jansen", DateOfBirth, allergies));
+            .AddOrMerge(new Patient(Bsn, "Jan Jansen", DateOfBirth, allergies, medications ?? []));
 }

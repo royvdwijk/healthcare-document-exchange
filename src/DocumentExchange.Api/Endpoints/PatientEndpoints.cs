@@ -15,7 +15,7 @@ public static class PatientEndpoints
             .WithTags("Patients");
 
         patients.MapGet("/{bsn}", GetPatient)
-            .WithSummary("Get information about a patient, optionally including extra information such as allergies.");
+            .WithSummary("Get information about a patient, optionally including extra information such as allergies and medications.");
 
         return app;
     }
@@ -46,7 +46,10 @@ public static class PatientEndpoints
             return TypedResults.NotFound();
         }
 
-        var response = PatientResponse.FromPatient(patient, includes.Contains(PatientInclude.Allergies));
+        var response = PatientResponse.FromPatient(
+            patient,
+            includeAllergies: includes.Contains(PatientInclude.Allergies),
+            includeMedications: includes.Contains(PatientInclude.Medications));
 
         logger.LogInformation("Shared patient {Bsn} including {Includes}", patient.Bsn, includes);
         return TypedResults.Ok(response);

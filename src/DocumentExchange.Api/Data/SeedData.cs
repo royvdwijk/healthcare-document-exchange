@@ -16,6 +16,12 @@ public static class SeedData
                 new Allergy("Penicillin", "Skin rash"),
                 new Allergy("Peanuts", "Swelling of the throat"),
                 new Allergy("Latex", "Itching")
+            ],
+            Medications:
+            [
+                new Medication("Metoprolol", "50 mg", "Once a day"),
+                new Medication("Paracetamol", "500 mg", "Up to 4 times a day when needed"),
+                new Medication("Omeprazole", "20 mg", "Once a day before breakfast")
             ])
     ];
 }

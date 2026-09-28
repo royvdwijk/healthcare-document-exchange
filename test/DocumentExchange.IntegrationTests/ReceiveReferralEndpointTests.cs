@@ -49,7 +49,7 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
     public async Task KnownPatient_IsMergedInsteadOfReplaced()
     {
         var patients = Factory.Services.GetRequiredService<IPatientRepository>();
-        await patients.AddOrMerge(new Patient(Bsn, "Jan Jansen", DateOfBirth, [new Allergy("Latex", "Itching")]));
+        await patients.AddOrMerge(new Patient(Bsn, "Jan Jansen", DateOfBirth, [new Allergy("Latex", "Itching")], []));
         var client = Factory.CreateClient();
 
         await client.PostAsJsonAsync("/api/referrals", CreateRequest([new ReferralAllergyRequest("Penicillin", "Skin rash")]));
@@ -59,6 +59,20 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
         Assert.Equal(2, patient.Allergies.Count);
         Assert.Contains(new Allergy("Latex", "Itching"), patient.Allergies);
         Assert.Contains(new Allergy("Penicillin", "Skin rash"), patient.Allergies);
+    }
+
+    [Fact]
+    public async Task KnownPatient_KeepsMedications()
+    {
+        var patients = Factory.Services.GetRequiredService<IPatientRepository>();
+        await patients.AddOrMerge(new Patient(Bsn, "Jan Jansen", DateOfBirth, [], [new Medication("Metoprolol", "50 mg", "Once a day")]));
+        var client = Factory.CreateClient();
+
+        await client.PostAsJsonAsync("/api/referrals", CreateRequest([]));
+
+        var patient = await patients.GetByBsnAsync(Bsn);
+        Assert.NotNull(patient);
+        Assert.Equal([new Medication("Metoprolol", "50 mg", "Once a day")], patient.Medications);
     }
 
     [Fact]

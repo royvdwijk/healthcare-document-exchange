@@ -7,7 +7,13 @@ namespace DocumentExchange.Api.Models;
 /// <param name="Name">The name of the patient.</param>
 /// <param name="DateOfBirth">The date of birth of the parient.</param>
 /// <param name="Allergies">A <see cref="List{T}"/> of <see cref="Allergy"/> objects that represents allergies this patient has.</param>
-public sealed record Patient(string Bsn, string Name, DateOnly DateOfBirth, IReadOnlyList<Allergy> Allergies)
+/// <param name="Medications">A <see cref="List{T}"/> of <see cref="Medication"/> objects that represents medications this patient uses.</param>
+public sealed record Patient(
+    string Bsn,
+    string Name,
+    DateOnly DateOfBirth,
+    IReadOnlyList<Allergy> Allergies,
+    IReadOnlyList<Medication> Medications)
 {
     /// <summary>
     /// Updates this patient with new data from the provided patient.
@@ -23,7 +29,8 @@ public sealed record Patient(string Bsn, string Name, DateOnly DateOfBirth, IRea
 
         return other with
         {
-            Allergies = [.. other.Allergies.UnionBy(Allergies, allergy => allergy.Substance, StringComparer.OrdinalIgnoreCase)]
+            Allergies = [.. other.Allergies.UnionBy(Allergies, allergy => allergy.Substance, StringComparer.OrdinalIgnoreCase)],
+            Medications = [.. other.Medications.UnionBy(Medications, medication => medication.Name, StringComparer.OrdinalIgnoreCase)]
         };
     }
 

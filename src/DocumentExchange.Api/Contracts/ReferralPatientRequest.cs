@@ -17,5 +17,6 @@ public sealed record ReferralPatientRequest(
     [Required] IReadOnlyList<ReferralAllergyRequest> Allergies)
 {
     /// <summary>Converts this request to a <see cref="Patient"/>.</summary>
-    public Patient ToPatient() => new(Bsn, Name, DateOfBirth, [.. Allergies.Select(allergy => allergy.ToAllergy())]);
+    /// <remarks>A referral does not contain medications, so the patient has none. Known medications are kept when merging.</remarks>
+    public Patient ToPatient() => new(Bsn, Name, DateOfBirth, [.. Allergies.Select(allergy => allergy.ToAllergy())], Medications: []);
 }

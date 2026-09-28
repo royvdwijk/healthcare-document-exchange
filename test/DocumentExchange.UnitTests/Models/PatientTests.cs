@@ -60,6 +60,46 @@ public class PatientTests
     }
 
     [Fact]
+    public void Merge_NewMedication_IsAdded()
+    {
+        var known = CreatePatient(medications: [new Medication("Metoprolol", "50 mg", "Once a day")]);
+        var other = CreatePatient(medications: [new Medication("Omeprazole", "20 mg", "Once a day")]);
+
+        var merged = known.Merge(other);
+
+        Assert.Equal(2, merged.Medications.Count);
+        Assert.Contains(new Medication("Metoprolol", "50 mg", "Once a day"), merged.Medications);
+        Assert.Contains(new Medication("Omeprazole", "20 mg", "Once a day"), merged.Medications);
+    }
+
+    [Fact]
+    public void Merge_MedicationNotSentAlong_IsKept()
+    {
+        var known = CreatePatient(medications: [new Medication("Metoprolol", "50 mg", "Once a day")]);
+        var other = CreatePatient(medications: []);
+
+        var merged = known.Merge(other);
+
+        Assert.Equal([new Medication("Metoprolol", "50 mg", "Once a day")], merged.Medications);
+    }
+
+    [Theory]
+    [InlineData("Metoprolol")]
+    [InlineData("metoprolol")]
+    [InlineData("METOPROLOL")]
+    public void Merge_KnownMedication_TakesDosageOfOtherWithoutDuplicating(string name)
+    {
+        var known = CreatePatient(medications: [new Medication("Metoprolol", "50 mg", "Once a day")]);
+        var other = CreatePatient(medications: [new Medication(name, "100 mg", "Twice a day")]);
+
+        var merged = known.Merge(other);
+
+        var medication = Assert.Single(merged.Medications);
+        Assert.Equal("100 mg", medication.Dosage);
+        Assert.Equal("Twice a day", medication.Frequency);
+    }
+
+    [Fact]
     public void Merge_DifferentBsn_Throws()
     {
         var known = CreatePatient(bsn: Bsn);
@@ -98,6 +138,7 @@ public class PatientTests
         string bsn = Bsn,
         string name = "Jan Jansen",
         DateOnly? dateOfBirth = null,
-        IReadOnlyList<Allergy>? allergies = null) =>
-        new(bsn, name, dateOfBirth ?? DateOfBirth, allergies ?? []);
+        IReadOnlyList<Allergy>? allergies = null,
+        IReadOnlyList<Medication>? medications = null) =>
+        new(bsn, name, dateOfBirth ?? DateOfBirth, allergies ?? [], medications ?? []);
 }

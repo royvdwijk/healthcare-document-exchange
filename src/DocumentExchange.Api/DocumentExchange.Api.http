@@ -27,4 +27,12 @@ Accept: application/json
 GET {{HostAddress}}/api/patients/999990019?include=allergies
 Accept: application/json
 
+### Get a patient, including their medications
+GET {{HostAddress}}/api/patients/999990019?include=medications
+Accept: application/json
+
+### Get a patient, including their allergies and medications
+GET {{HostAddress}}/api/patients/999990019?include=allergies&include=medications
+Accept: application/json
+
 ###
