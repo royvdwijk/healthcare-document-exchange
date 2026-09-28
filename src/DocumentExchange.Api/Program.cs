@@ -3,6 +3,7 @@ using DocumentExchange.Api.Endpoints;
 using DocumentExchange.Api.Hosted;
 using DocumentExchange.Api.Identification;
 using Serilog;
+using Serilog.Formatting.Compact;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,7 @@ builder.Services.AddSerilog((services, logger) =>
     if (!string.IsNullOrWhiteSpace(logFilePath))
     {
         logger.WriteTo.File(
+            new CompactJsonFormatter(),
             Path.Combine(builder.Environment.ContentRootPath, logFilePath),
             rollingInterval: RollingInterval.Day,
             retainedFileCountLimit: 7);

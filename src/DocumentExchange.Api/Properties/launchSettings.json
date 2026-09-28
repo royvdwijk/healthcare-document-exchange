@@ -8,7 +8,7 @@
       "applicationUrl": "http://localhost:5100",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "LogFilePath": "logs/document-exchange-.log"
+        "LogFilePath": "logs/document-exchange-.clef"
       }
     },
     "https": {
@@ -18,7 +18,7 @@
       "applicationUrl": "https://localhost:5101;http://localhost:5100",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "LogFilePath": "logs/document-exchange-.log"
+        "LogFilePath": "logs/document-exchange-.clef"
       }
     },
     "PartyA": {
@@ -29,7 +29,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "SeedDatabase": "true",
-        "LogFilePath": "logs/party-a-.log"
+        "LogFilePath": "logs/party-a-.clef"
       }
     },
     "PartyB": {
@@ -39,7 +39,7 @@
       "applicationUrl": "https://localhost:5201;http://localhost:5200",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "LogFilePath": "logs/party-b-.log"
+        "LogFilePath": "logs/party-b-.clef"
       }
     }
   }

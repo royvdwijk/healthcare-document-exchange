@@ -26,10 +26,12 @@ public static class PatientEndpoints
         [RegularExpression(@"^\d{9}$", ErrorMessage = "The BSN must consist of exactly 9 digits.")] string bsn,
         string[]? include,
         IPatientRepository patients,
+        HttpRequest httpRequest,
         ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
         var logger = loggerFactory.CreateLogger(typeof(PatientEndpoints));
+        var identity = IdentityHeader.Get(httpRequest);
 
         if (!TryParseIncludes(include ?? [], out var includes, out var invalidValue))
         {
@@ -44,7 +46,7 @@ public static class PatientEndpoints
         var patient = await patients.GetByBsnAsync(bsn, cancellationToken);
         if (patient is null)
         {
-            logger.LogWarning("Patient {Bsn} was requested but is not known", bsn);
+            logger.LogWarning("Patient {Bsn} was requested by {Identity} but is not known", bsn, identity);
             return TypedResults.NotFound();
         }
 
@@ -53,7 +55,9 @@ public static class PatientEndpoints
             includeAllergies: includes.Contains(PatientInclude.Allergies),
             includeMedications: includes.Contains(PatientInclude.Medications));
 
-        logger.LogInformation("Shared patient {Bsn} including {Includes}", patient.Bsn, includes);
+        logger.LogInformation(
+            "Shared patient {Bsn} with {Identity} including {Includes}: {AllergyCount} allergies, {MedicationCount} medications",
+            patient.Bsn, identity, includes, response.Allergies?.Count ?? 0, response.Medications?.Count ?? 0);
         return TypedResults.Ok(response);
     }
 
