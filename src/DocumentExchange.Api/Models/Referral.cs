@@ -5,10 +5,12 @@ namespace DocumentExchange.Api.Models;
 /// </summary>
 /// <param name="Id">The unique identifier assigned when the referral was received.</param>
 /// <param name="ReceivedAt">The moment the referral was received.</param>
+/// <param name="Owner">The identity of the party that sent the referral.</param>
 /// <param name="Patient">The referred patient, including the allergies that were sent along.</param>
 /// <param name="Reason">The reason for the referral.</param>
 public sealed record Referral(
     Guid Id,
     DateTimeOffset ReceivedAt,
+    string Owner,
     Patient Patient,
     string Reason);

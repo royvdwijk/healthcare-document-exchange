@@ -1,10 +1,12 @@
 @HostAddress = http://localhost:5100
+@Identity = Test identity
 
 GET {{HostAddress}}/openapi/v1.json
 Accept: application/json
 
 ### Receive a referral letter
 POST {{HostAddress}}/api/referrals
+X-Identity: {{Identity}}
 Content-Type: application/json
 
 {
@@ -21,18 +23,22 @@ Content-Type: application/json
 
 ### Get a patient
 GET {{HostAddress}}/api/patients/999990019
+X-Identity: {{Identity}}
 Accept: application/json
 
 ### Get a patient, including their allergies
 GET {{HostAddress}}/api/patients/999990019?include=allergies
+X-Identity: {{Identity}}
 Accept: application/json
 
 ### Get a patient, including their medications
 GET {{HostAddress}}/api/patients/999990019?include=medications
+X-Identity: {{Identity}}
 Accept: application/json
 
 ### Get a patient, including their allergies and medications
 GET {{HostAddress}}/api/patients/999990019?include=allergies&include=medications
+X-Identity: {{Identity}}
 Accept: application/json
 
 ###

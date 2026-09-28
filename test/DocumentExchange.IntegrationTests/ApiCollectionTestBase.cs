@@ -1,4 +1,5 @@
 using DocumentExchange.Api.Data;
+using DocumentExchange.Api.Identification;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,6 +11,17 @@ public abstract class ApiCollectionTestBase(WebApplicationFactory<Program> facto
     protected WebApplicationFactory<Program> Factory { get; } = factory;
 
     protected InMemoryDatabase Database => Factory.Services.GetRequiredService<InMemoryDatabase>();
+
+    /// <summary>The identity the client from <see cref="CreateIdentifiedClient"/> states.</summary>
+    protected const string Identity = "Test";
+
+    /// <summary>Creates a client that states who it is with the <see cref="IdentityHeader"/>.</summary>
+    protected HttpClient CreateIdentifiedClient()
+    {
+        var client = Factory.CreateClient();
+        client.DefaultRequestHeaders.Add(IdentityHeader.Name, Identity);
+        return client;
+    }
 
     public Task InitializeAsync()
     {

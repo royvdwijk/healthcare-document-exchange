@@ -1,6 +1,7 @@
 using DocumentExchange.Api.Data;
 using DocumentExchange.Api.Endpoints;
 using DocumentExchange.Api.Hosted;
+using DocumentExchange.Api.Identification;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,9 +42,12 @@ var app = builder.Build();
 
 app.UseSerilogRequestLogging(options =>
 {
-    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} from {ClientIp} responded {StatusCode} in {Elapsed:0} ms";
+    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} from {Identity} ({ClientIp}) responded {StatusCode} in {Elapsed:0} ms";
     options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        diagnosticContext.Set("Identity", IdentityHeader.Find(httpContext.Request) ?? "unknown");
         diagnosticContext.Set("ClientIp", httpContext.Connection.RemoteIpAddress?.ToString());
+    };
 });
 
 app.UseExceptionHandler();

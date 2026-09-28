@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using DocumentExchange.Api.Contracts;
 using DocumentExchange.Api.Data;
+using DocumentExchange.Api.Identification;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace DocumentExchange.Api.Endpoints;
@@ -12,7 +13,8 @@ public static class PatientEndpoints
     public static IEndpointRouteBuilder MapPatientEndpoints(this IEndpointRouteBuilder app)
     {
         var patients = app.MapGroup("/api/patients")
-            .WithTags("Patients");
+            .WithTags("Patients")
+            .AddEndpointFilter<RequireIdentityHeaderFilter>();
 
         patients.MapGet("/{bsn}", GetPatient)
             .WithSummary("Get information about a patient, optionally including extra information such as allergies and medications.");

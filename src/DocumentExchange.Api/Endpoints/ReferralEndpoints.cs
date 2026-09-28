@@ -1,5 +1,6 @@
 using DocumentExchange.Api.Contracts;
 using DocumentExchange.Api.Data;
+using DocumentExchange.Api.Identification;
 using DocumentExchange.Api.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -11,7 +12,8 @@ public static class ReferralEndpoints
     public static IEndpointRouteBuilder MapReferralEndpoints(this IEndpointRouteBuilder app)
     {
         var referrals = app.MapGroup("/api/referrals")
-            .WithTags("Referrals");
+            .WithTags("Referrals")
+            .AddEndpointFilter<RequireIdentityHeaderFilter>();
 
         referrals.MapPost("/", ReceiveReferral)
             .WithSummary("Receive a referral letter from another care provider.");
@@ -23,6 +25,7 @@ public static class ReferralEndpoints
         ReferralRequest request,
         IPatientRepository patients,
         IReferralRepository referrals,
+        HttpRequest httpRequest,
         ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
@@ -32,6 +35,7 @@ public static class ReferralEndpoints
         var referral = new Referral(
             Id: Guid.NewGuid(),
             ReceivedAt: DateTimeOffset.UtcNow,
+            Owner: IdentityHeader.Get(httpRequest),
             patient,
             request.Reason);
 
@@ -39,8 +43,8 @@ public static class ReferralEndpoints
         await referrals.AddAsync(referral, cancellationToken);
 
         logger.LogInformation(
-            "Received referral {ReferralId} for patient {Bsn} with {AllergyCount} allergies",
-            referral.Id, patient.Bsn, patient.Allergies.Count);
+            "Received referral {ReferralId} from {Owner} for patient {Bsn} with {AllergyCount} allergies",
+            referral.Id, referral.Owner, patient.Bsn, patient.Allergies.Count);
 
         return TypedResults.Created((string?)null, referral);
     }

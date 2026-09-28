@@ -19,7 +19,7 @@ public class GetPatientEndpointTests(WebApplicationFactory<Program> factory) : A
     public async Task KnownPatient_ReturnsPatientWithoutExtraInformationByDefault()
     {
         await AddPatientAsync([new Allergy("Latex", "Itching")], [new Medication("Metoprolol", "50 mg", "Once a day")]);
-        var client = Factory.CreateClient();
+        var client = CreateIdentifiedClient();
 
         var response = await client.GetAsync($"/api/patients/{Bsn}");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -40,7 +40,7 @@ public class GetPatientEndpointTests(WebApplicationFactory<Program> factory) : A
     public async Task IncludeAllergies_ReturnsPatientWithAllergies(string include)
     {
         await AddPatientAsync([new Allergy("Latex", "Itching"), new Allergy("Penicillin", "Skin rash")]);
-        var client = Factory.CreateClient();
+        var client = CreateIdentifiedClient();
 
         var response = await client.GetAsync($"/api/patients/{Bsn}?include={include}");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -62,7 +62,7 @@ public class GetPatientEndpointTests(WebApplicationFactory<Program> factory) : A
         await AddPatientAsync(
             [new Allergy("Latex", "Itching")],
             [new Medication("Metoprolol", "50 mg", "Once a day"), new Medication("Omeprazole", "20 mg", "Once a day")]);
-        var client = Factory.CreateClient();
+        var client = CreateIdentifiedClient();
 
         var response = await client.GetAsync($"/api/patients/{Bsn}?include={include}");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -79,7 +79,7 @@ public class GetPatientEndpointTests(WebApplicationFactory<Program> factory) : A
     public async Task IncludeAllergiesAndMedications_ReturnsPatientWithBoth()
     {
         await AddPatientAsync([new Allergy("Latex", "Itching")], [new Medication("Metoprolol", "50 mg", "Once a day")]);
-        var client = Factory.CreateClient();
+        var client = CreateIdentifiedClient();
 
         var response = await client.GetAsync($"/api/patients/{Bsn}?include=allergies&include=medications");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -93,7 +93,7 @@ public class GetPatientEndpointTests(WebApplicationFactory<Program> factory) : A
     [Fact]
     public async Task UnknownPatient_ReturnsNotFound()
     {
-        var client = Factory.CreateClient();
+        var client = CreateIdentifiedClient();
 
         var response = await client.GetAsync($"/api/patients/{Bsn}");
 
@@ -106,7 +106,7 @@ public class GetPatientEndpointTests(WebApplicationFactory<Program> factory) : A
     [InlineData("12345678a")]
     public async Task InvalidBsn_ReturnsValidationProblem(string bsn)
     {
-        var client = Factory.CreateClient();
+        var client = CreateIdentifiedClient();
 
         var response = await client.GetAsync($"/api/patients/{bsn}");
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -120,7 +120,7 @@ public class GetPatientEndpointTests(WebApplicationFactory<Program> factory) : A
     public async Task UnknownInclude_ReturnsValidationProblem()
     {
         await AddPatientAsync([]);
-        var client = Factory.CreateClient();
+        var client = CreateIdentifiedClient();
 
         var response = await client.GetAsync($"/api/patients/{Bsn}?include=allergies&include=hobbies");
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);

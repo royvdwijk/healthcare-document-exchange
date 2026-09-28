@@ -19,7 +19,7 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
     [Fact]
     public async Task ValidReferral_ReturnsCreatedWithStoredReferral()
     {
-        var client = Factory.CreateClient();
+        var client = CreateIdentifiedClient();
         var request = CreateRequest([new ReferralAllergyRequest("Penicillin", "Skin rash")]);
 
         var response = await client.PostAsJsonAsync("/api/referrals", request);
@@ -28,6 +28,7 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
         var referral = await response.Content.ReadFromJsonAsync<Referral>();
         Assert.NotNull(referral);
         Assert.NotEqual(Guid.Empty, referral.Id);
+        Assert.Equal(Identity, referral.Owner);
         Assert.Equal(request.Reason, referral.Reason);
         Assert.Equal(Bsn, referral.Patient.Bsn);
         Assert.Equal([new Allergy("Penicillin", "Skin rash")], referral.Patient.Allergies);
@@ -36,7 +37,7 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
     [Fact]
     public async Task ValidReferral_StoresReferralAndPatient()
     {
-        var client = Factory.CreateClient();
+        var client = CreateIdentifiedClient();
 
         var response = await client.PostAsJsonAsync("/api/referrals", CreateRequest([new ReferralAllergyRequest("Penicillin", "Skin rash")]));
 
@@ -46,11 +47,23 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
     }
 
     [Fact]
+    public async Task ValidReferral_StoresIdentityAsOwner()
+    {
+        var client = CreateIdentifiedClient();
+
+        var response = await client.PostAsJsonAsync("/api/referrals", CreateRequest([]));
+
+        var referral = await response.Content.ReadFromJsonAsync<Referral>();
+        Assert.True(Database.Referrals.TryGetValue(referral!.Id, out var stored));
+        Assert.Equal(Identity, stored.Owner);
+    }
+
+    [Fact]
     public async Task KnownPatient_IsMergedInsteadOfReplaced()
     {
         var patients = Factory.Services.GetRequiredService<IPatientRepository>();
         await patients.AddOrMerge(new Patient(Bsn, "Jan Jansen", DateOfBirth, [new Allergy("Latex", "Itching")], []));
-        var client = Factory.CreateClient();
+        var client = CreateIdentifiedClient();
 
         await client.PostAsJsonAsync("/api/referrals", CreateRequest([new ReferralAllergyRequest("Penicillin", "Skin rash")]));
 
@@ -66,7 +79,7 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
     {
         var patients = Factory.Services.GetRequiredService<IPatientRepository>();
         await patients.AddOrMerge(new Patient(Bsn, "Jan Jansen", DateOfBirth, [], [new Medication("Metoprolol", "50 mg", "Once a day")]));
-        var client = Factory.CreateClient();
+        var client = CreateIdentifiedClient();
 
         await client.PostAsJsonAsync("/api/referrals", CreateRequest([]));
 
@@ -78,7 +91,7 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
     [Fact]
     public async Task SameReferralTwice_StoresTwoReferrals()
     {
-        var client = Factory.CreateClient();
+        var client = CreateIdentifiedClient();
         var request = CreateRequest([]);
 
         await client.PostAsJsonAsync("/api/referrals", request);
@@ -100,7 +113,7 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
     [InlineData("""{ "patient": { "bsn": "999990019", "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": [ { "substance": "Latex" } ] }, "reason": "Discharged" }""", "Patient.Allergies[0].Reaction")]
     public async Task InvalidReferral_ReturnsValidationProblemAndStoresNothing(string json, string expectedErrorKey)
     {
-        var client = Factory.CreateClient();
+        var client = CreateIdentifiedClient();
 
         var response = await client.PostAsync("/api/referrals", new StringContent(json, Encoding.UTF8, "application/json"));
 
@@ -115,7 +128,7 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
     [Fact]
     public async Task MalformedJson_ReturnsBadRequest()
     {
-        var client = Factory.CreateClient();
+        var client = CreateIdentifiedClient();
 
         var response = await client.PostAsync("/api/referrals", new StringContent("{ not json", Encoding.UTF8, "application/json"));
 
