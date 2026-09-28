@@ -2,7 +2,7 @@ using DocumentExchange.Api.Models;
 
 namespace DocumentExchange.Api.Data;
 
-// NOTE: Fake test data, provided on startup when running development mode and explicitly setting the startup parameter to seed.
+// NOTE: Fake test data, provided on startup when running in development mode and explicitly setting the startup parameter to seed.
 public static class SeedData
 {
     public static IReadOnlyList<Patient> Patients { get; } =

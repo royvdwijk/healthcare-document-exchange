@@ -4,4 +4,4 @@ ASP.NET Core REST API for exchanging patient documents and healthcare informatio
 
 ## Disclaimer
 
-This project is build for demonstration purposes only.
+This project is built for demonstration purposes only.

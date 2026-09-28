@@ -61,7 +61,6 @@ public static class PatientEndpoints
         return TypedResults.Ok(response);
     }
 
-
     /// <summary>Converts the <paramref name="values"/> to <see cref="PatientInclude"/>, ignoring casing.</summary>
     /// <param name="values"></param>
     /// <param name="includes"></param>

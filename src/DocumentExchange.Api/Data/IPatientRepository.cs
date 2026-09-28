@@ -5,7 +5,7 @@ namespace DocumentExchange.Api.Data;
 public interface IPatientRepository
 {
     /// <summary>
-    /// Adds or merges a <see cref="Patient"/> instance in the repository depending on if the <paramref name="patient"/> instance is known using equality.
+    /// Adds or merges a <see cref="Patient"/> instance in the repository depending on whether the <paramref name="patient"/> instance is known, using equality.
     /// Information should be retained with a merge.
     /// </summary>
     /// <param name="patient">The patient to add or merge.</param>
