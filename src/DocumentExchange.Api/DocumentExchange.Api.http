@@ -1,44 +1,88 @@
-@HostAddress = http://localhost:5100
-@Identity = Test identity
+# Switch parties by commenting one and uncommenting the other.
+# Start both parties with start-project.cmd.
 
+# Party A, sending to Party B
+@Identity = Ziekenhuis A
+@HostAddress = http://localhost:5200
+
+# Party B, sending to Party A
+#@Identity = Verpleeghuis B
+#@HostAddress = http://localhost:5100
+
+@Bsn = 999990019
+
+### Get the OpenAPI document
 GET {{HostAddress}}/openapi/v1.json
 Accept: application/json
 
-### Receive a referral letter
+### Send a referral letter with allergies to the other party
 POST {{HostAddress}}/api/referrals
 X-Identity: {{Identity}}
 Content-Type: application/json
 
 {
   "patient": {
-    "bsn": "999990019",
+    "bsn": "{{Bsn}}",
     "name": "Jan Jansen",
     "dateOfBirth": "1942-03-14",
     "allergies": [
       { "substance": "Penicillin", "reaction": "Skin rash" }
     ]
   },
-  "reason": "TEST. Discharged after hip surgery, requires rehabilitation care."
+  "reason": "Discharged after hip surgery, requires rehabilitation care."
 }
 
 ### Get a patient
-GET {{HostAddress}}/api/patients/999990019
+GET {{HostAddress}}/api/patients/{{Bsn}}
 X-Identity: {{Identity}}
 Accept: application/json
 
 ### Get a patient, including their allergies
-GET {{HostAddress}}/api/patients/999990019?include=allergies
+GET {{HostAddress}}/api/patients/{{Bsn}}?include=allergies
 X-Identity: {{Identity}}
 Accept: application/json
 
 ### Get a patient, including their medications
-GET {{HostAddress}}/api/patients/999990019?include=medications
+GET {{HostAddress}}/api/patients/{{Bsn}}?include=medications
 X-Identity: {{Identity}}
 Accept: application/json
 
 ### Get a patient, including their allergies and medications
-GET {{HostAddress}}/api/patients/999990019?include=allergies&include=medications
+GET {{HostAddress}}/api/patients/{{Bsn}}?include=allergies&include=medications
 X-Identity: {{Identity}}
 Accept: application/json
+
+### Error: unknown patient (404)
+GET {{HostAddress}}/api/patients/123456782
+X-Identity: {{Identity}}
+Accept: application/json
+
+### Error: BSN that fails the 11-check (400)
+GET {{HostAddress}}/api/patients/123456780
+X-Identity: {{Identity}}
+Accept: application/json
+
+### Error: unknown include value (400)
+GET {{HostAddress}}/api/patients/{{Bsn}}?include=hobbies
+X-Identity: {{Identity}}
+Accept: application/json
+
+### Error: missing X-Identity header (400)
+GET {{HostAddress}}/api/patients/{{Bsn}}
+Accept: application/json
+
+### Error: invalid referral, without reason and with a date of birth in the future (400)
+POST {{HostAddress}}/api/referrals
+X-Identity: {{Identity}}
+Content-Type: application/json
+
+{
+  "patient": {
+    "bsn": "{{Bsn}}",
+    "name": "Jan Jansen",
+    "dateOfBirth": "2999-01-01",
+    "allergies": []
+  }
+}
 
 ###
