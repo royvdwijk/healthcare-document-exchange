@@ -25,13 +25,13 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
         var response = await client.PostAsJsonAsync("/api/referrals", request);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var referral = await response.Content.ReadFromJsonAsync<Referral>();
+        var referral = await response.Content.ReadFromJsonAsync<ReferralResponse>();
         Assert.NotNull(referral);
         Assert.NotEqual(Guid.Empty, referral.Id);
         Assert.Equal(Identity, referral.Owner);
         Assert.Equal(request.Reason, referral.Reason);
         Assert.Equal(Bsn, referral.Patient.Bsn);
-        Assert.Equal([new Allergy("Penicillin", "Skin rash")], referral.Patient.Allergies);
+        Assert.Equal([new PatientAllergyResponse("Penicillin", "Skin rash")], referral.Patient.Allergies);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
 
         var response = await client.PostAsJsonAsync("/api/referrals", CreateRequest([new ReferralAllergyRequest("Penicillin", "Skin rash")]));
 
-        var referral = await response.Content.ReadFromJsonAsync<Referral>();
+        var referral = await response.Content.ReadFromJsonAsync<ReferralResponse>();
         Assert.True(Database.Referrals.ContainsKey(referral!.Id));
         Assert.True(Database.Patients.ContainsKey(Bsn));
     }
@@ -53,7 +53,7 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
 
         var response = await client.PostAsJsonAsync("/api/referrals", CreateRequest([]));
 
-        var referral = await response.Content.ReadFromJsonAsync<Referral>();
+        var referral = await response.Content.ReadFromJsonAsync<ReferralResponse>();
         Assert.True(Database.Referrals.TryGetValue(referral!.Id, out var stored));
         Assert.Equal(Identity, stored.Owner);
     }

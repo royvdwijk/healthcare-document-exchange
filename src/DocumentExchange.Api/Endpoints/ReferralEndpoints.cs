@@ -21,7 +21,7 @@ public static class ReferralEndpoints
         return app;
     }
 
-    private static async Task<Created<Referral>> ReceiveReferral(
+    private static async Task<Created<ReferralResponse>> ReceiveReferral(
         ReferralRequest request,
         IPatientRepository patients,
         IReferralRepository referrals,
@@ -46,6 +46,6 @@ public static class ReferralEndpoints
             "Received referral {ReferralId} from {Owner} for patient {Bsn} with {AllergyCount} allergies",
             referral.Id, referral.Owner, patient.Bsn, patient.Allergies.Count);
 
-        return TypedResults.Created((string?)null, referral);
+        return TypedResults.Created((string?)null, ReferralResponse.FromReferral(referral));
     }
 }
