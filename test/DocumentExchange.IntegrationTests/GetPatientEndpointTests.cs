@@ -104,6 +104,8 @@ public class GetPatientEndpointTests(WebApplicationFactory<Program> factory) : A
     [InlineData("12345678")]
     [InlineData("1234567890")]
     [InlineData("12345678a")]
+    [InlineData("123456780")]
+    [InlineData("９９９９９００１９")]
     public async Task InvalidBsn_ReturnsValidationProblem(string bsn)
     {
         var client = CreateIdentifiedClient();
@@ -116,13 +118,16 @@ public class GetPatientEndpointTests(WebApplicationFactory<Program> factory) : A
         Assert.Contains("bsn", problem.Errors.Keys);
     }
 
-    [Fact]
-    public async Task UnknownInclude_ReturnsValidationProblem()
+    [Theory]
+    [InlineData("hobbies")]
+    [InlineData("0")]
+    [InlineData("5")]
+    public async Task UnknownInclude_ReturnsValidationProblem(string include)
     {
         await AddPatientAsync([]);
         var client = CreateIdentifiedClient();
 
-        var response = await client.GetAsync($"/api/patients/{Bsn}?include=allergies&include=hobbies");
+        var response = await client.GetAsync($"/api/patients/{Bsn}?include=allergies&include={include}");
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
         var problem = await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>();

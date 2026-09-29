@@ -89,6 +89,19 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
     }
 
     [Fact]
+    public async Task WithoutDateOfBirth_StoresPatientWithoutDateOfBirth()
+    {
+        var client = CreateIdentifiedClient();
+        const string json = """{ "patient": { "bsn": "999990019", "name": "Jan Jansen", "allergies": [] }, "reason": "Discharged" }""";
+
+        var response = await client.PostAsync("/api/referrals", new StringContent(json, Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.True(Database.Patients.TryGetValue(Bsn, out var patient));
+        Assert.Null(patient.DateOfBirth);
+    }
+
+    [Fact]
     public async Task SameReferralTwice_StoresTwoReferrals()
     {
         var client = CreateIdentifiedClient();
@@ -107,6 +120,8 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
     [InlineData("""{ "patient": { "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": [] }, "reason": "Discharged" }""", "Patient.Bsn")]
     [InlineData("""{ "patient": { "bsn": "12345678", "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": [] }, "reason": "Discharged" }""", "Patient.Bsn")]
     [InlineData("""{ "patient": { "bsn": "12345678a", "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": [] }, "reason": "Discharged" }""", "Patient.Bsn")]
+    [InlineData("""{ "patient": { "bsn": "123456780", "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": [] }, "reason": "Discharged" }""", "Patient.Bsn")]
+    [InlineData("""{ "patient": { "bsn": "９９９９９００１９", "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": [] }, "reason": "Discharged" }""", "Patient.Bsn")]
     [InlineData("""{ "patient": { "bsn": "999990019", "name": "", "dateOfBirth": "1942-03-14", "allergies": [] }, "reason": "Discharged" }""", "Patient.Name")]
     [InlineData("""{ "patient": { "bsn": "999990019", "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": null }, "reason": "Discharged" }""", "Patient.Allergies")]
     [InlineData("""{ "patient": { "bsn": "999990019", "name": "Jan Jansen", "dateOfBirth": "1942-03-14", "allergies": [ { "substance": "", "reaction": "Itching" } ] }, "reason": "Discharged" }""", "Patient.Allergies[0].Substance")]
@@ -116,6 +131,31 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
         var client = CreateIdentifiedClient();
 
         var response = await client.PostAsync("/api/referrals", new StringContent(json, Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>();
+        Assert.NotNull(problem);
+        Assert.Contains(expectedErrorKey, problem.Errors.Keys);
+        Assert.Empty(Database.Referrals);
+        Assert.Empty(Database.Patients);
+    }
+
+    public static TheoryData<ReferralRequest, string> InvalidRequests => new()
+    {
+        { CreateRequest([], name: new string('a', 201)), "Patient.Name" },
+        { CreateRequest([], dateOfBirth: DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1)), "Patient.DateOfBirth" },
+        { CreateRequest([new ReferralAllergyRequest(new string('a', 201), "Itching")]), "Patient.Allergies[0].Substance" },
+        { CreateRequest([new ReferralAllergyRequest("Latex", new string('a', 501))]), "Patient.Allergies[0].Reaction" },
+        { CreateRequest([], reason: new string('a', 4001)), "Reason" }
+    };
+
+    [Theory]
+    [MemberData(nameof(InvalidRequests))]
+    public async Task InvalidReferralValues_ReturnsValidationProblemAndStoresNothing(ReferralRequest request, string expectedErrorKey)
+    {
+        var client = CreateIdentifiedClient();
+
+        var response = await client.PostAsJsonAsync("/api/referrals", request);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var problem = await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>();
@@ -136,6 +176,10 @@ public class ReceiveReferralEndpointTests(WebApplicationFactory<Program> factory
         Assert.Empty(Database.Referrals);
     }
 
-    private static ReferralRequest CreateRequest(IReadOnlyList<ReferralAllergyRequest> allergies) =>
-        new(new ReferralPatientRequest(Bsn, "Jan Jansen", DateOfBirth, allergies), "Discharged after hip surgery.");
+    private static ReferralRequest CreateRequest(
+        IReadOnlyList<ReferralAllergyRequest> allergies,
+        string name = "Jan Jansen",
+        DateOnly? dateOfBirth = null,
+        string reason = "Discharged after hip surgery.") =>
+        new(new ReferralPatientRequest(Bsn, name, dateOfBirth ?? DateOfBirth, allergies), reason);
 }

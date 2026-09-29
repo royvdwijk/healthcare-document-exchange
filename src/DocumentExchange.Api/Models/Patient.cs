@@ -5,13 +5,13 @@ namespace DocumentExchange.Api.Models;
 /// </summary>
 /// <param name="Bsn">The unique BSN that distinguishes the patient from other instances.</param>
 /// <param name="Name">The name of the patient.</param>
-/// <param name="DateOfBirth">The date of birth of the patient.</param>
+/// <param name="DateOfBirth">The date of birth of the patient, or <see langword="null"/> when not known.</param>
 /// <param name="Allergies">A <see cref="List{T}"/> of <see cref="Allergy"/> objects that represents allergies this patient has.</param>
 /// <param name="Medications">A <see cref="List{T}"/> of <see cref="Medication"/> objects that represents medications this patient uses.</param>
 public sealed record Patient(
     string Bsn,
     string Name,
-    DateOnly DateOfBirth,
+    DateOnly? DateOfBirth,
     IReadOnlyList<Allergy> Allergies,
     IReadOnlyList<Medication> Medications)
 {
@@ -29,6 +29,7 @@ public sealed record Patient(
 
         return other with
         {
+            DateOfBirth = other.DateOfBirth ?? DateOfBirth,
             Allergies = [.. other.Allergies.UnionBy(Allergies, allergy => allergy.Substance, StringComparer.OrdinalIgnoreCase)],
             Medications = [.. other.Medications.UnionBy(Medications, medication => medication.Name, StringComparer.OrdinalIgnoreCase)]
         };

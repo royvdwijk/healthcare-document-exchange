@@ -7,13 +7,13 @@ namespace DocumentExchange.Api.Contracts;
 /// </summary>
 /// <param name="Bsn">The BSN of the patient.</param>
 /// <param name="Name">The name of the patient.</param>
-/// <param name="DateOfBirth">The date of birth of the patient.</param>
+/// <param name="DateOfBirth">The date of birth of the patient, or <see langword="null"/> when not known.</param>
 /// <param name="Allergies">Allergies of the patient, or <see langword="null"/> when not part of the response.</param>
 /// <param name="Medications">Medications of the patient, or <see langword="null"/> when not part of the response.</param>
 public sealed record PatientResponse(
     string Bsn,
     string Name,
-    DateOnly DateOfBirth,
+    DateOnly? DateOfBirth,
     IReadOnlyList<PatientAllergyResponse>? Allergies,
     IReadOnlyList<PatientMedicationResponse>? Medications)
 {

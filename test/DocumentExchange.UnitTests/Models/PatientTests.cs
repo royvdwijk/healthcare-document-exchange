@@ -21,6 +21,17 @@ public class PatientTests
     }
 
     [Fact]
+    public void Merge_OtherWithoutDateOfBirth_KeepsKnownDateOfBirth()
+    {
+        var known = CreatePatient(dateOfBirth: DateOfBirth);
+        var other = CreatePatient() with { DateOfBirth = null };
+
+        var merged = known.Merge(other);
+
+        Assert.Equal(DateOfBirth, merged.DateOfBirth);
+    }
+
+    [Fact]
     public void Merge_NewAllergy_IsAdded()
     {
         var known = CreatePatient(allergies: [new Allergy("Latex", "Itching")]);
