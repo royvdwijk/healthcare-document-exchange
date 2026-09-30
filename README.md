@@ -6,6 +6,8 @@ Built for a case where a hospital refers a patient to a nursing home. The hospit
 
 Each care provider runs its own instance of the API, called a party.
 
+How this API works and why it's built this way is explained in [docs/design.md](docs/design.md).
+
 ## Disclaimer
 
 This project is built for demonstration purposes only. Things a production system needs, such as authentication and a database, are left out on purpose. All patient data is fake and reset each time the API starts.
@@ -52,7 +54,7 @@ Run `start-project.cmd` to build the API and start two parties, each in its own 
 
 Alternatively use Visual Studio or another editor to call and debug the API directly.
 
-The information set is specified by [launchsettings.json](src/DocumentExchange.Api/Properties/launchSettings.json).
+The information set is specified by [launchSettings.json](src/DocumentExchange.Api/Properties/launchSettings.json).
 
 You can modify the settings directly, or set them separately as environment variables.
 
